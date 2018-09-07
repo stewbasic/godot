@@ -4,7 +4,6 @@ import string
 import platform
 from distutils.version import LooseVersion
 
-
 def is_active():
     return True
 
@@ -29,6 +28,7 @@ def get_opts():
         ('ndk_platform', 'Target platform (android-<api>, e.g. "android-18")', "android-18"),
         EnumVariable('android_arch', 'Target architecture', "armv7", ('armv7', 'armv6', 'arm64v8', 'x86')),
         BoolVariable('android_neon', 'Enable NEON support (armv7 only)', True),
+        BoolVariable('android16', 'Generate APK for Android API levels [16,18)', False),
         BoolVariable('android_stl', 'Enable Android STL support (for modules)', True)
     ]
 
@@ -101,6 +101,11 @@ def configure(env):
     if env["android_arch"] == "armv7" and env['android_neon']:
         neon_text = " (with NEON)"
     print("Building for Android (" + env['android_arch'] + ")" + neon_text)
+
+    if env["android16"]:
+        # ndk_platform should equal the minimum supported API level; see
+        # https://stackoverflow.com/a/27093163
+        env["ndk_platform"] = "android-16"
 
     can_vectorize = True
     if env['android_arch'] == 'x86':
@@ -283,7 +288,13 @@ def configure(env):
 
     env.Append(CPPPATH=['#platform/android'])
     env.Append(CPPFLAGS=['-DANDROID_ENABLED', '-DUNIX_ENABLED', '-DNO_FCNTL', '-DMPC_FIXED_POINT'])
-    env.Append(LIBS=['OpenSLES', 'EGL', 'GLESv3', 'android', 'log', 'z', 'dl'])
+    if env["android16"]:
+        env["enable_gles3"] = False
+    gles = 'GLESv2'
+    if env["enable_gles3"]:
+        gles = 'GLESv3'
+        env.Append(CPPFLAGS=["-DGLES3_ENABLED="])
+    env.Append(LIBS=['OpenSLES', 'EGL', gles, 'android', 'log', 'z', 'dl', 'android_support'])
 
     # TODO: Move that to opus module's config
     if 'module_opus_enabled' in env and env['module_opus_enabled']:

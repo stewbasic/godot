@@ -104,10 +104,17 @@ gradle_asset_dirs_text = ""
 for x in env.android_asset_dirs:
     gradle_asset_dirs_text += ",'" + x.replace("\\", "/") + "'"
 
+gradle_apk_name = "android"
+
 gradle_default_config_text = ""
 
 minSdk = 18
 targetSdk = 27
+
+if env["android16"]:
+    minSdk = 16
+    gradle_default_config_text += "maxSdkVersion 17\n\t\t"
+    gradle_apk_name = "android16"
 
 for x in env.android_default_config:
     if x.startswith("minSdkVersion") and int(x.split(" ")[-1]) < minSdk:
@@ -133,6 +140,7 @@ gradle_text = gradle_text.replace("$$GRADLE_JNI_DIRS$$", gradle_jni_dirs_text)
 gradle_text = gradle_text.replace("$$GRADLE_DEFAULT_CONFIG$$", gradle_default_config_text)
 gradle_text = gradle_text.replace("$$GRADLE_PLUGINS$$", gradle_plugins)
 gradle_text = gradle_text.replace("$$GRADLE_CLASSPATH$$", gradle_classpath)
+gradle_text = gradle_text.replace("$$GRADLE_APK_NAME$$", gradle_apk_name)
 
 with open_utf8(abspath + "/java/build.gradle", "w") as gradle_baseout:
 	gradle_baseout.write(gradle_text)

@@ -77,7 +77,7 @@ android {
 	}
 	applicationVariants.all { variant ->
 		// ApplicationVariant is undocumented, but this method is widely used; may break with another version of the Android Gradle plugin
-		variant.outputs.get(0).setOutputFile(new File("${projectDir}/../../../bin", "android_${variant.name}.apk"))
+		variant.outputs.get(0).setOutputFile(new File("${projectDir}/../../../bin", "$$GRADLE_APK_NAME$$_${variant.name}.apk"))
 	}
 }
 

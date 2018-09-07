@@ -159,6 +159,7 @@ opts.Add(BoolVariable('xaudio2', "Enable the XAudio2 audio driver", False))
 opts.Add(BoolVariable('xml', "Enable XML format support for resources", True))
 
 # Advanced options
+opts.Add(BoolVariable('enable_gles3', "Use GLES3 renderer when available", True))
 opts.Add(BoolVariable('disable_3d', "Disable 3D nodes for a smaller executable", False))
 opts.Add(BoolVariable('disable_advanced_gui', "Disable advanced 3D GUI nodes and behaviors", False))
 opts.Add('extra_suffix', "Custom extra suffix added to the base filename of all generated binary files", '')
@@ -446,6 +447,9 @@ if selected_platform in platform_list:
 
     if not env['verbose']:
         methods.no_verbose(sys, env)
+
+    if not env['enable_gles3']:
+        env.disabled_modules.append('mobile_vr')
 
     if (not env["platform"] == "server"): # FIXME: detect GLES3
         env.Append(BUILDERS = { 'GLES3_GLSL' : env.Builder(action=run_in_subprocess(gles_builders.build_gles3_headers), suffix='glsl.gen.h', src_suffix='.glsl')})

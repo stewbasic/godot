@@ -37,6 +37,8 @@ public class GodotLib {
 	public static GodotIO io;
 
 	static {
+ 		// https://stackoverflow.com/a/36523359
+		System.loadLibrary("c++_shared");
 		System.loadLibrary("godot_android");
 	}
 

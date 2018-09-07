@@ -1039,6 +1039,14 @@ class EditorExportAndroid : public EditorExportPlatform {
 		return enabled_abis;
 	}
 
+	String get_export_template(const Ref<EditorExportPreset> &p_preset, bool p_debug) const {
+		bool android16 = p_preset->get("android16");
+		const char* apk_name = android16 ?
+						 (p_debug ? "android16_debug.apk" : "android16_release.apk") :
+						 (p_debug ? "android_debug.apk" : "android_release.apk");
+		return find_export_template(apk_name);
+	}
+
 public:
 	enum {
 		MAX_USER_PERMISSIONS = 20
@@ -1068,6 +1076,7 @@ public:
 		r_options->push_back(ExportOption(PropertyInfo(Variant::BOOL, "one_click_deploy/clear_previous_install"), true));
 		r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "custom_package/debug", PROPERTY_HINT_GLOBAL_FILE, "*.apk"), ""));
 		r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "custom_package/release", PROPERTY_HINT_GLOBAL_FILE, "*.apk"), ""));
+		r_options->push_back(ExportOption(PropertyInfo(Variant::BOOL, "android16"), false));
 		r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "command_line/extra_args"), ""));
 		r_options->push_back(ExportOption(PropertyInfo(Variant::INT, "version/code", PROPERTY_HINT_RANGE, "1,4096,1,or_greater"), 1));
 		r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "version/name"), "1.0"));
@@ -1310,9 +1319,8 @@ public:
 	}
 
 	virtual bool can_export(const Ref<EditorExportPreset> &p_preset, String &r_error, bool &r_missing_templates) const {
-
 		String err;
-		r_missing_templates = find_export_template("android_debug.apk") == String() || find_export_template("android_release.apk") == String();
+		r_missing_templates = get_export_template(p_preset, true) == String() || get_export_template(p_preset, false) == String();
 
 		if (p_preset->get("custom_package/debug") != "") {
 			if (FileAccess::exists(p_preset->get("custom_package/debug"))) {
@@ -1399,11 +1407,7 @@ public:
 
 		src_apk = src_apk.strip_edges();
 		if (src_apk == "") {
-			if (p_debug) {
-				src_apk = find_export_template("android_debug.apk");
-			} else {
-				src_apk = find_export_template("android_release.apk");
-			}
+			src_apk = get_export_template(p_preset, p_debug);
 			if (src_apk == "") {
 				EditorNode::add_io_error("Package not found: " + src_apk);
 				return ERR_FILE_NOT_FOUND;
@@ -1707,11 +1711,12 @@ public:
 				return ERR_FILE_CANT_OPEN;
 			}
 
+			bool android16 = p_preset->get("android16");
 			List<String> args;
 			args.push_back("-digestalg");
-			args.push_back("SHA-256");
+			args.push_back(android16 ? "SHA1" : "SHA-256");
 			args.push_back("-sigalg");
-			args.push_back("SHA256withRSA");
+			args.push_back(android16 ? "SHA1withRSA" : "SHA256withRSA");
 			String tsa_url = EditorSettings::get_singleton()->get("export/android/timestamping_authority_url");
 			if (tsa_url != "") {
 				args.push_back("-tsa");

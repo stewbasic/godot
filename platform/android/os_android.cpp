@@ -33,7 +33,9 @@
 #include "core/io/file_access_buffered_fa.h"
 #include "core/project_settings.h"
 #include "drivers/gles2/rasterizer_gles2.h"
+#ifdef GLES3_ENABLED
 #include "drivers/gles3/rasterizer_gles3.h"
+#endif
 #include "drivers/unix/dir_access_unix.h"
 #include "drivers/unix/file_access_unix.h"
 #include "file_access_android.h"
@@ -136,12 +138,14 @@ int OS_Android::get_current_video_driver() const {
 }
 
 Error OS_Android::initialize(const VideoMode &p_desired, int p_video_driver, int p_audio_driver) {
-
+#ifdef GLES3_ENABLED
 	bool use_gl3 = get_gl_version_code_func() >= 0x00030000;
 	use_gl3 = use_gl3 && (GLOBAL_GET("rendering/quality/driver/driver_name") == "GLES3");
+#endif
 	bool gl_initialization_error = false;
 
 	while (true) {
+#ifdef GLES3_ENABLED
 		if (use_gl3) {
 			if (RasterizerGLES3::is_viable() == OK) {
 				if (gfx_init_func)
@@ -160,6 +164,7 @@ Error OS_Android::initialize(const VideoMode &p_desired, int p_video_driver, int
 				}
 			}
 		} else {
+#endif
 			if (RasterizerGLES2::is_viable() == OK) {
 				if (gfx_init_func)
 					gfx_init_func(gfx_init_ud, true);
@@ -170,7 +175,9 @@ Error OS_Android::initialize(const VideoMode &p_desired, int p_video_driver, int
 				gl_initialization_error = true;
 				break;
 			}
+#ifdef GLES3_ENABLED
 		}
+#endif
 	}
 
 	if (gl_initialization_error) {
